@@ -2,6 +2,7 @@ package data
 
 import (
 	"database/sql"
+	"errors"
 	"github.com/lib/pq"
 	"github.com/zetsub0/greenlight/internal/validator"
 	"time"
@@ -49,8 +50,37 @@ func (m MovieModel) Insert(movie *Movie) error {
 	return m.DB.QueryRow(query, args...).Scan(&movie.ID, &movie.CreatedAt, &movie.Version)
 }
 
-func (m MovieModel) Ger(id int64) (*Movie, error) {
-	return nil, nil
+func (m MovieModel) Get(id int64) (*Movie, error) {
+	if id < 1 {
+		return nil, ErrRecordNotFound
+	}
+
+	query := `
+			SELECT *
+			FROM movies
+			WHERE id = $1
+`
+	var movie Movie
+
+	err := m.DB.QueryRow(query, id).Scan(
+		&movie.ID,
+		&movie.CreatedAt,
+		&movie.Title,
+		&movie.Year,
+		&movie.Runtime,
+		pq.Array(&movie.Genres),
+		&movie.Version,
+	)
+
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, ErrRecordNotFound
+		default:
+			return nil, err
+		}
+	}
+	return &movie, nil
 }
 
 func (m MovieModel) Update(movie *Movie) error {
