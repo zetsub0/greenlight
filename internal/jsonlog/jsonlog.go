@@ -61,7 +61,7 @@ func (l *Logger) print(level Level, message string, properties map[string]string
 	if level < l.minLevel {
 		return 0, nil
 	}
-
+	location := time.FixedZone("UTC+3", 3*60*60)
 	aux := struct {
 		Level      string            `json:"level"`
 		Time       string            `json:"time"`
@@ -70,7 +70,7 @@ func (l *Logger) print(level Level, message string, properties map[string]string
 		Trace      string            `json:"trace,omitempty"`
 	}{
 		Level:      level.String(),
-		Time:       time.Now().UTC().Format(time.RFC3339),
+		Time:       time.Now().In(location).Format(time.RFC1123Z),
 		Message:    message,
 		Properties: properties,
 	}
