@@ -49,6 +49,8 @@ down:
 # =============== #
 # QUALITY CONTROL #
 # =============== #
+
+##audit: check files
 .PHONY: audit
 audit:
 	@echo 'Tidying and verifying module dependencies...'
@@ -61,3 +63,13 @@ audit:
 	staticcheck ./...
 	@echo 'Running tests...'
 	go test -race -vet=off ./...
+
+# ===== #
+# BUILD #
+# ===== #
+
+##build: build the cmd/api application
+.PHONY: build
+build:
+	@echo 'Building cmd/api...'
+	go build -o=./bin/api ./cmd/api
