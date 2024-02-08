@@ -1,3 +1,9 @@
+include .env
+
+# ======= #
+# HELPERS #
+# ======= #
+
 ##help: print this help message
 .PHONY: help
 help:
@@ -8,10 +14,14 @@ help:
 confirm:
 	@echo -n 'Are you sure? [y/N] ' && read ans && [ $${ans:-N} = y ]
 
+# =========== #
+# DEVELOPMENT #
+# =========== #
+
 ##run: run the cmd/api application
 .PHONY: run
 run:
-	go run ./cmd/api
+	go run ./cmd/api -db-dsn=${GREENLIGHT_DB_DSN}
 
 ##psql: connect to the database using psql
 .PHONY: psql
@@ -36,3 +46,18 @@ down:
 	@echo 'Running down migrations...'
 	migrate -path "./migrations" -database "${GREENLIGHT_DB_DSN}" down
 
+# =============== #
+# QUALITY CONTROL #
+# =============== #
+.PHONY: audit
+audit:
+	@echo 'Tidying and verifying module dependencies...'
+	go mod tidy
+	go mod verify
+	@echo 'Formatting code...'
+	go fmt ./...
+	@echo 'Vetting code...'
+	go vet ./...
+	staticcheck ./...
+	@echo 'Running tests...'
+	go test -race -vet=off ./...
