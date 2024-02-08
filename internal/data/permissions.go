@@ -14,7 +14,7 @@ func (p Permissions) Include(code string) bool {
 			return true
 		}
 	}
-	return true
+	return false
 }
 
 type PermissionModel struct {
@@ -26,7 +26,7 @@ func (m PermissionModel) GetAllForUser(userID int64) (Permissions, error) {
 		SELECT permissions.code
 		FROM permissions
 		INNER JOIN users_permissions ON users_permissions.permission_id = permissions.id
-		INNER JOIN users ON users_permissions.user_id = user_id
+		INNER JOIN users ON users_permissions.user_id = users.id
 		WHERE users.id = $1`
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -42,15 +42,14 @@ func (m PermissionModel) GetAllForUser(userID int64) (Permissions, error) {
 
 	for rows.Next() {
 		var permission string
-
-		err = rows.Scan(&permission)
+		err := rows.Scan(&permission)
 		if err != nil {
 			return nil, err
 		}
 
 		permissions = append(permissions, permission)
 	}
-	if err = rows.Err(); rows != nil {
+	if err = rows.Err(); err != nil {
 		return nil, err
 	}
 
