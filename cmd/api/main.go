@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"expvar"
 	"flag"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
@@ -10,6 +11,7 @@ import (
 	"github.com/zetsub0/greenlight/internal/jsonlog"
 	"github.com/zetsub0/greenlight/internal/mailer"
 	"os"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -88,6 +90,20 @@ func main() {
 
 	defer db.Close()
 	logger.PrintInfo("database connection pool established", nil)
+
+	expvar.NewString("version").Set(version)
+
+	expvar.Publish("goroutines", expvar.Func(func() interface{} {
+		return runtime.NumGoroutine()
+	}))
+
+	expvar.Publish("database", expvar.Func(func() interface{} {
+		return db.Stats()
+	}))
+
+	expvar.Publish("timestamp", expvar.Func(func() interface{} {
+		return time.Now().Unix()
+	}))
 
 	app := &application{
 		config: cfg,
